@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -xe
+
+source_region=eu-central-1
+
+AMIS_FILE=../amis.json
+
+# TODO: aarch64-linux
+echo "{" > $AMIS_FILE
+
+for release in "stable" "unstable"; do 
+    nix build ".#ami-$release" --out-link ami-$release
+
+    terraform apply -var="release=$release" -auto-approve
+    ami=$(terraform output -raw ami-id)
+
+    regions=$(aws --profile cachix-engineering --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
+    for region in $regions; do
+       aws --profile cachix-engineering ec2 copy-image \
+            --source-region $source_region \
+            --source-image-id $ami \
+            --region $region \
+            --name cachix-deploy | jq -r "\"\\\"$release.$region\\\": \\\"\" + (.ImageId) + \"\\\",\"" >> $AMIS_FILE
+    done
+done
+
+echo "}" >> $AMIS_FILE
+
+# fix trailing comma
+sed -i ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' $AMIS_FILE
