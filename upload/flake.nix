@@ -14,7 +14,7 @@
     };
   };
 
-  outputs = { self, nixpkgs-stable, nixpkgs-unstable, nixos-generators-stable, nixos-generators-unstable }: 
+  outputs = { self, nixpkgs-stable, nixpkgs-unstable, nixos-generators-stable, nixos-generators-unstable, ... }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = f: builtins.listToAttrs (map (name: { inherit name; value = f name; }) systems);
@@ -33,14 +33,14 @@
       };
     in {
       packages = forAllSystems (
-        system: rec {
+        system: {
           ami-stable = mkAMI nixos-generators-stable system;
           ami-unstable = mkAMI nixos-generators-unstable system;
         }
       );
 
       devShell = forAllSystems (system:
-        with (import nixpkgs-stable { inherit system; }); mkShell { buildInputs = [awscli2 terraform jq]; }
+        with (nixpkgs-stable.legacyPackages.${system}); mkShell { buildInputs = [awscli2 terraform jq moreutils]; }
       );
     };
 }

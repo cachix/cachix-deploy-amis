@@ -2,16 +2,16 @@
 set -xe
 
 source_region=eu-central-1
+system=$(nix eval --raw nixpkgs#system)
 
 AMIS_FILE=../amis.json
-
-# TODO: aarch64-linux
-echo "{" > $AMIS_FILE
+NEW_AMIS=$(mktemp)
+printf "{}" > $NEW_AMIS
 
 for release in "stable" "unstable"; do 
-    nix build ".#ami-$release" --out-link ami-$release
+    nix build ".#ami-$release" --out-link ami-$release-$system
 
-    terraform apply -var="release=$release" -auto-approve
+    terraform apply -var="release=$release" -var="system=$system" -auto-approve
     ami=$(terraform output -raw ami-id)
 
     regions=$(aws --profile cachix-engineering --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
@@ -20,11 +20,9 @@ for release in "stable" "unstable"; do
             --source-region $source_region \
             --source-image-id $ami \
             --region $region \
-            --name cachix-deploy | jq -r "\"\\\"$release.$region\\\": \\\"\" + (.ImageId) + \"\\\",\"" >> $AMIS_FILE
+            --name cachix-deploy | jq --slurp '.[1][env.release + "." + env.region + "." env.system] = .[0].ImageId | .[1]' - $NEW_AMIS | sponge $NEW_AMIS
     done
 done
 
-echo "}" >> $AMIS_FILE
-
-# fix trailing comma
-sed -i ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' $AMIS_FILE
+# Update the AMI file with the new AMIs
+jq -s '.[0] * .[1]' $AMIS_FILE $NEW_AMIS | sponge $AMIS_FILE
