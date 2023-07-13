@@ -37,7 +37,17 @@ resource "aws_s3_bucket" "cachix-deploy-amis" {
   bucket = "cachix-deploy-amis"
 }
 
+resource "aws_s3_bucket_ownership_controls" "cachix-deploy-amis" {
+  bucket = aws_s3_bucket.cachix-deploy-amis.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# TODO: is an ACL needed if buckets are private by default?
 resource "aws_s3_bucket_acl" "cachix-deploy-amis-acl" {
+  depends_on = [ aws_s3_bucket_ownership_controls.cachix-deploy-amis ]
+
   bucket = aws_s3_bucket.cachix-deploy-amis.id
   acl    = "private"
 }
