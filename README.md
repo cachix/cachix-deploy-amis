@@ -5,7 +5,7 @@ If you're looking to get started using Cachix Deploy with AWS, see the [cachix-d
 
 # Supported versions
 
-- NixOS stable: 22.05
+- NixOS stable: 23.05
 - NixOS unstable
 
 # Terraform module
