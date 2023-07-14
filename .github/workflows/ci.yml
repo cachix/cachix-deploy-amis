@@ -1,0 +1,89 @@
+name: "Build and release AMIs"
+
+on:
+  push:
+    # branches:
+    #   - main
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+env:
+  # The main region for the source AMI
+  AWS_REGION: eu-central-1
+  TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API }}
+
+jobs:
+  build-and-upload-vhds:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [[self-hosted, linux, X64], [self-hosted, linux, ARM64]]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v22
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
+          aws-region: ${{ env.AWS_REGION }}
+
+        # TODO: not needed here, but find out why the runner is set up this way
+      - name: Fix Nix PATH
+        run: export PATH=$HOME/.nix-profile/bin:$PATH
+
+      - name: Build and upload VHDs
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: ./run
+
+  # TODO: open a PR with the plan
+  deploy-amis:
+    needs: build-and-upload-vhds
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v22
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: terraform init
+
+      - name: Sync uploaded VHDs with Terraform
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: |
+          terraform apply \
+            -target="data.aws_s3_objects.cachix_deploy_vhds" \
+            -input=false \
+            -no-color \
+            -auto-approve
+
+      - name: Apply Terraform plan
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: |
+          terraform apply -input=false -no-color -auto-approve
+          terraform output -json ami_ids | jq --sort-keys --slurp add ../amis.json - | sponge ../amis.json
+
+      - name: Update AMI list
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: Update AMIs
+          body:
+          commit-message: Update AMIs
