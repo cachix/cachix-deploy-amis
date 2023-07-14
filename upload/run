@@ -28,5 +28,4 @@ for release in "stable" "unstable"; do
     done
 done
 
-# Update the AMI file with the new AMIs
-jq -s '.[0] * .[1]' $AMIS_FILE $NEW_AMIS | sponge $AMIS_FILE
+printf "$NEW_AMIS"

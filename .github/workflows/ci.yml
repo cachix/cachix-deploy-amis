@@ -1,0 +1,85 @@
+name: "Build and release AMIs"
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # Can't capture all of the outputs from a matrix build until this is fully implemented:
+  # https://github.com/actions/runner/pull/2477#issuecomment-1501003600
+  build-ami-x86_64-linux:
+    runs-on: [self-hosted, linux, X64]
+
+    outputs:
+      amis: ${{ steps.build-ami.outputs.amis }}
+
+    defaults:
+      run:
+        working-directory: upload
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v22
+
+      - name: Build and upload AMI
+        id: build-ami
+        run: nix develop -L -c ./run > x86-amis.json
+
+      - name: Save AMI IDs
+        uses: actions/upload-artifact@v3
+        with:
+          name: x86-amis
+          path: x86-amis.json
+
+
+  build-ami-aarch64-linux:
+    runs-on: [self-hosted, linux, ARM64]
+
+    outputs:
+      amis: ${{ steps.build-ami.outputs.amis }}
+
+    defaults:
+      run:
+        working-directory: upload
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v22
+
+      - name: Build and upload AMI
+        id: build-ami
+        run: nix develop -L -c ./run > arm64-amis.json
+
+      - name: Save AMI IDs
+        uses: actions/upload-artifact@v3
+        with:
+          name: arm64-amis
+          path: arm64-amis.json
+
+  release:
+    needs: [build-ami-x86_64-linux, build-ami-aarch64-linux]
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v22
+
+      - name: Fetch AMI IDs
+        uses: actions/download-artifact@v3
+
+      - name: Update AMI list
+        working-directory: upload
+        run: |
+          nix develop -L --command bash \
+            -c "jq --sort-keys --slurp add ../amis.json ../x86-amis.json ../arm64-amis.json | sponge ../amis.json"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update AMIs
+
+
