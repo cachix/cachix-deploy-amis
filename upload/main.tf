@@ -13,14 +13,41 @@ provider "aws" {
 }
 
 variable "release" {
+  type        = string
+  default     = "stable"
+  description = "NixOS version to use: stable or unstable."
+
+  validation {
+    condition     = contains(["stable", "unstable"], var.release)
+    error_message = "Invalid release: ${var.release}. Must be stable or unstable."
+  }
+}
+
+variable "system" {
   type = string
+  description = "The two-component shorthand for the platform, e.g x86_64-linux"
+
+  validation  {
+    condition = contains(["x86_64-linux", "aarch64-linux"], var.system)
+    error_message = "System must be one of x86_64-linux or aarch64-linux"
+  }
 }
 
 resource "aws_s3_bucket" "cachix-deploy-amis" {
   bucket = "cachix-deploy-amis"
 }
 
+resource "aws_s3_bucket_ownership_controls" "cachix-deploy-amis" {
+  bucket = aws_s3_bucket.cachix-deploy-amis.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# TODO: is an ACL needed if buckets are private by default?
 resource "aws_s3_bucket_acl" "cachix-deploy-amis-acl" {
+  depends_on = [ aws_s3_bucket_ownership_controls.cachix-deploy-amis ]
+
   bucket = aws_s3_bucket.cachix-deploy-amis.id
   acl    = "private"
 }
@@ -83,7 +110,8 @@ EOF
 }
 
 locals {
-  vhd = one(fileset(path.module, "ami-${var.release}/*.vhd"))
+  vhd = one(fileset(path.module, "ami-${var.release}-${var.system}/*.vhd"))
+  ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
 }
 
 resource "aws_s3_object" "cachix-deploy-vhd" {
@@ -115,7 +143,7 @@ resource "aws_ami" "cachix-deploy-ami" {
   deprecation_time    = "2024-10-13T14:49:32.000Z"
 
   name                = "cachix-deploy-ami-${aws_ebs_snapshot_import.cachix-deploy-snapshot.id}"
-  architecture        = "x86_64"
+  architecture        = local.ami_architecture
   virtualization_type = "hvm"
   root_device_name    = "/dev/xvda"
   ena_support         = true
