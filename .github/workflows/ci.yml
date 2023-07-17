@@ -18,23 +18,20 @@ jobs:
     outputs:
       amis: ${{ steps.build-ami.outputs.amis }}
 
-    defaults:
-      run:
-        working-directory: upload
-
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
 
       - name: Build and upload AMI
         id: build-ami
+        working-directory: upload
         run: nix develop -L -c ./run > x86-amis.json
 
       - name: Save AMI IDs
         uses: actions/upload-artifact@v3
         with:
           name: x86-amis
-          path: x86-amis.json
+          path: upload/x86-amis.json
 
 
   build-ami-aarch64-linux:
@@ -43,23 +40,20 @@ jobs:
     outputs:
       amis: ${{ steps.build-ami.outputs.amis }}
 
-    defaults:
-      run:
-        working-directory: upload
-
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
 
       - name: Build and upload AMI
         id: build-ami
+        working-directory: upload
         run: nix develop -L -c ./run > arm64-amis.json
 
       - name: Save AMI IDs
         uses: actions/upload-artifact@v3
         with:
           name: arm64-amis
-          path: arm64-amis.json
+          path: upload/arm64-amis.json
 
   release:
     needs: [build-ami-x86_64-linux, build-ami-aarch64-linux]
