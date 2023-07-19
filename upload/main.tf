@@ -1,4 +1,13 @@
 terraform {
+  cloud {
+    organization = "cachix"
+
+    workspaces {
+      # TODO: which workspace?
+      name = "cachix-deploy-amis"
+    }
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
