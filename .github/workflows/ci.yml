@@ -23,7 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
-      - run: nix profile install nixpkgs#unzip
+
+      - run: |
+          nix profile install nixpkgs#unzip
+          printf $PATH
+
 
       - uses: hashicorp/setup-terraform@v2
         with:
