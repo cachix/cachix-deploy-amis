@@ -11,6 +11,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
 jobs:
   # Can't capture all of the outputs from a matrix build until this is fully implemented:
   # https://github.com/actions/runner/pull/2477#issuecomment-1501003600
@@ -27,14 +30,15 @@ jobs:
       - run: |
           nix profile install nixpkgs#unzip
           printf $PATH
+          printf $(ls $HOME/.nix-profile)
 
-
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      # - uses: hashicorp/setup-terraform@v2
+      #   with:
+      #     cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Initialize terraform
-        run: terraform init
+        working-directory: upload
+        run: nix develop -L --command bash -c "terraform init"
 
       - name: Build and upload AMI
         id: build-ami
