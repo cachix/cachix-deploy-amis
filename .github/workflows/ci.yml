@@ -23,6 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
+      - run: nix profile install nixpkgs#unzip
+
       - uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
@@ -43,6 +45,7 @@ jobs:
 
 
   build-ami-aarch64-linux:
+    if: false
     runs-on: [self-hosted, linux, ARM64]
 
     outputs:
@@ -51,6 +54,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
+      - run: nix profile install nixpkgs#unzip
+
       - uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
