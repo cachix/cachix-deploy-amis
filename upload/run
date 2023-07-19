@@ -14,9 +14,9 @@ for release in "stable" "unstable"; do
     terraform apply -var="release=$release" -var="system=$system" -auto-approve
     ami=$(terraform output -raw ami-id)
 
-    regions=$(aws --profile cachix-engineering --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
+    regions=$(aws --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
     for region in $regions; do
-       aws --profile cachix-engineering ec2 copy-image \
+       aws ec2 copy-image \
             --source-region $source_region \
             --source-image-id $ami \
             --region $region \

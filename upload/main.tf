@@ -8,7 +8,6 @@ terraform {
 }
 
 provider "aws" {
-  profile = "cachix-engineering"
   region = "eu-central-1"
 }
 
