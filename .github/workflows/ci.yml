@@ -30,7 +30,7 @@ jobs:
       - run: |
           nix profile install nixpkgs#unzip
           printf $PATH
-          printf $(ls $HOME/.nix-profile)
+          printf $(ls $HOME/.nix-profile/bin)
 
       # - uses: hashicorp/setup-terraform@v2
       #   with:
