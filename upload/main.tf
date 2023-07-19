@@ -140,8 +140,6 @@ resource "aws_ebs_snapshot_import" "cachix-deploy-snapshot" {
 }
 
 resource "aws_ami" "cachix-deploy-ami" {
-  deprecation_time    = "2024-10-13T14:49:32.000Z"
-
   name                = "cachix-deploy-ami-${aws_ebs_snapshot_import.cachix-deploy-snapshot.id}"
   architecture        = local.ami_architecture
   virtualization_type = "hvm"
