@@ -28,9 +28,11 @@ jobs:
       - uses: cachix/install-nix-action@v22
 
       - run: |
-          nix profile install nixpkgs#unzip
-          printf $PATH
-          printf $(ls $HOME/.nix-profile/bin)
+          nix profile install nixpkgs#unzip nixpkgs#which
+          echo $PATH
+          echo $(ls $HOME/.nix-profile/bin)
+          export PATH=$HOME/.nix-profile/bin:$PATH
+          echo $(which unzip)
 
       # - uses: hashicorp/setup-terraform@v2
       #   with:
