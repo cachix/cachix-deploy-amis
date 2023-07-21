@@ -11,21 +11,21 @@ printf "{}" > $NEW_AMIS
 for release in "stable" "unstable"; do 
     nix build ".#ami-$release" --out-link ami-$release-$system
 
-    terraform apply -var="release=$release" -var="system=$system" -auto-approve
+    terraform plan -var="release=$release" -var="system=$system" -auto-approve
     ami=$(terraform output -raw ami-id)
 
-    regions=$(aws --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
-    for region in $regions; do
-       aws ec2 copy-image \
-            --source-region $source_region \
-            --source-image-id $ami \
-            --region $region \
-            --name cachix-deploy \
-         | jq --arg ami_name "$release.$region.$system" \
-              --slurp \
-              '.[1][($ami_name)] = .[0].ImageId | .[1]' - $NEW_AMIS \
-         | sponge $NEW_AMIS
-    done
+    # regions=$(aws --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
+    # for region in $regions; do
+    #    aws ec2 copy-image \
+    #         --source-region $source_region \
+    #         --source-image-id $ami \
+    #         --region $region \
+    #         --name cachix-deploy \
+    #      | jq --arg ami_name "$release.$region.$system" \
+    #           --slurp \
+    #           '.[1][($ami_name)] = .[0].ImageId | .[1]' - $NEW_AMIS \
+    #      | sponge $NEW_AMIS
+    # done
 done
 
 printf "$NEW_AMIS"
