@@ -12,7 +12,7 @@ permissions:
   pull-requests: write
 
 env:
-  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+  TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API }}
 
 jobs:
   # Can't capture all of the outputs from a matrix build until this is fully implemented:
