@@ -33,8 +33,8 @@ jobs:
 
       - uses: cachix/install-nix-action@v22
 
-      # Fix PATH in runner
-      - run: export PATH=$HOME/.nix-profile/bin:$PATH
+      - name: Fix Nix PATH
+        run: export PATH=$HOME/.nix-profile/bin:$PATH
 
       - name: Initialize Terraform
         working-directory: upload
@@ -52,36 +52,38 @@ jobs:
           name: amis-x86_64-linux
           path: upload/amis-x86_64-linux.json
 
-
   build-ami-aarch64-linux:
-    if: false
     runs-on: [self-hosted, linux, ARM64]
-
-    outputs:
-      amis: ${{ steps.build-ami.outputs.amis }}
 
     steps:
       - uses: actions/checkout@v2
-      - uses: cachix/install-nix-action@v22
-      - run: nix profile install nixpkgs#unzip
 
-      - uses: hashicorp/setup-terraform@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Initialize terraform
+      - uses: cachix/install-nix-action@v22
+
+      - name: Fix Nix PATH
+        run: export PATH=$HOME/.nix-profile/bin:$PATH
+
+      - name: Initialize Terraform
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
         run: terraform init
 
-      - name: Build and upload AMI
-        id: build-ami
+      - name: Build and upload AMIs
         working-directory: upload
-        run: nix develop -L -c ./run > arm64-amis.json
+        shell: nix develop --command bash -e {0}
+        run: ./run
 
-      - name: Save AMI IDs
+      - name: Add AMI IDs to artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: arm64-amis
-          path: upload/arm64-amis.json
+          name: amis-aarch64-linux
+          path: upload/amis-aarch64-linux.json
 
   release:
     needs: [build-ami-x86_64-linux, build-ami-aarch64-linux]
@@ -95,9 +97,9 @@ jobs:
 
       - name: Update AMI list
         working-directory: upload
+        shell: nix develop --command bash -e {0}
         run: |
-          nix develop -L --command bash \
-            -c "jq --sort-keys --slurp add ../amis.json ../x86-amis.json ../arm64-amis.json | sponge ../amis.json"
+          jq --sort-keys --slurp add ../amis.json ../amis-aarch64-linux.json ../amis-x86_64-linux.json | sponge ../amis.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
