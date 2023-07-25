@@ -11,7 +11,8 @@ printf "{}" > $NEW_AMIS
 for release in "stable" "unstable"; do 
     nix build ".#ami-$release" --out-link ami-$release-$system
 
-    terraform plan -var="release=$release" -var="system=$system"
+    terraform plan -var="release=$release" -var="system=$system" -no-color
+
     # -auto-approve
     # ami=$(terraform output -raw ami-id)
 
@@ -29,4 +30,4 @@ for release in "stable" "unstable"; do
     # done
 done
 
-printf "$NEW_AMIS"
+cp $NEW_AMIS "$system-amis.json"

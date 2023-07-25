@@ -53,13 +53,13 @@ jobs:
       - name: Build and upload AMI
         id: build-ami
         working-directory: upload
-        run: nix develop -L -c ./run > x86-amis.json
+        run: nix develop -L --command ./run
 
       - name: Save AMI IDs
         uses: actions/upload-artifact@v3
         with:
-          name: x86-amis
-          path: upload/x86-amis.json
+          name: x86_64-linux-amis
+          path: upload/x86_64-linux-amis.json
 
 
   build-ami-aarch64-linux:
