@@ -14,7 +14,7 @@ for release in "stable" "unstable"; do
     nix build ".#ami-$release" --out-link $ami_path
 
     # Upload the AMI to the default region
-    terraform approve -input=false -no-color -auto-approve \
+    terraform apply -input=false -no-color -auto-approve \
       -var="system=$system" \
       -var="ami_path=$ami_path"
 
