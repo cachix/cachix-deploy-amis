@@ -22,9 +22,6 @@ jobs:
   build-ami-x86_64-linux:
     runs-on: [self-hosted, linux, X64]
 
-    outputs:
-      amis: ${{ steps.build-ami.outputs.amis }}
-
     steps:
       - uses: actions/checkout@v2
 
@@ -36,38 +33,24 @@ jobs:
 
       - uses: cachix/install-nix-action@v22
 
-      - run: |
-          nix profile install nixpkgs#unzip nixpkgs#which
-          export PATH=$HOME/.nix-profile/bin:$PATH
-
-      # - uses: hashicorp/setup-terraform@v2
-      #   with:
-      #     cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      # Fix PATH in runner
+      - run: export PATH=$HOME/.nix-profile/bin:$PATH
 
       - name: Initialize Terraform
         working-directory: upload
         shell: nix develop --command bash -e {0}
         run: terraform init
 
-      - name: Build stable AMI
-        working-directory: upload
-        run: nix build -L .#ami-stable --out-link ami-stable-x86_64-linux
-
-      - name: Terraform Plan
+      - name: Build and upload AMIs
         working-directory: upload
         shell: nix develop --command bash -e {0}
-        run: terraform plan -var=system=x86_64-linux -var=ami_path=ami-stable-x86_64-linux --no-color
+        run: ./run
 
-      # - name: Build and upload AMI
-      #   id: build-ami
-      #   working-directory: upload
-      #   run: nix develop -L --command ./run
-      #
-      # - name: Save AMI IDs
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: x86_64-linux-amis
-      #     path: upload/x86_64-linux-amis.json
+      - name: Add AMI IDs to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: amis-x86_64-linux
+          path: upload/amis-x86_64-linux.json
 
 
   build-ami-aarch64-linux:
