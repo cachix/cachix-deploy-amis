@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "deploy_ami"
+description = "Interactive tool to help deploy AMIs"
+authors = [ "Cachix" ]
+version = "0.1"
+packages = [{include = "deploy_ami.py"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+click = "^8.1.4"
+
+[tool.poetry.scripts]
+deploy_amis = "deploy_ami:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -12,9 +12,13 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    poetry2nix = {
+      url = "github:nix-community/poetry2nix";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
   };
 
-  outputs = { self, nixpkgs-stable, nixpkgs-unstable, nixos-generators-stable, nixos-generators-unstable, ... }:
+  outputs = { self, nixpkgs-stable, nixpkgs-unstable, nixos-generators-stable, nixos-generators-unstable, poetry2nix, ... }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = f: builtins.listToAttrs (map (name: { inherit name; value = f name; }) systems);
@@ -36,6 +40,10 @@
         system: {
           ami-stable = mkAMI nixos-generators-stable system;
           ami-unstable = mkAMI nixos-generators-unstable system;
+
+          deploy-ami = poetry2nix.legacyPackages.${system}.mkPoetryApplication {
+            projectDir = ./.;
+          };
         }
       );
 

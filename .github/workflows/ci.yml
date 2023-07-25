@@ -14,6 +14,7 @@ permissions:
 
 env:
   AWS_REGION: eu-central-1
+  TF_IN_AUTOMATION: 1
   TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API }}
 
 jobs:
@@ -22,8 +23,12 @@ jobs:
   build-ami-x86_64-linux:
     runs-on: [self-hosted, linux, X64]
 
-    outputs:
-      amis: ${{ steps.build-ami.outputs.amis }}
+    matrix:
+      # release: [stable, unstable]
+      release: [stable]
+
+    # outputs:
+    #   amis: ${{ steps.build-ami.outputs.amis }}
 
     steps:
       - uses: actions/checkout@v2
@@ -36,33 +41,23 @@ jobs:
 
       - uses: cachix/install-nix-action@v22
 
-      - run: |
-          nix profile install nixpkgs#unzip nixpkgs#which
-          export PATH=$HOME/.nix-profile/bin:$PATH
+      - run: export PATH=$HOME/.nix-profile/bin:$PATH
 
-      # - uses: hashicorp/setup-terraform@v2
-      #   with:
-      #     cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Initialize Terraform
-        working-directory: upload
-        shell: nix develop --command bash -e {0}
-        run: terraform init
+      - working-directory: upload
+        run: nix profile install ./#deploy-ami
 
       - name: Build stable AMI
+        id: build-ami
         working-directory: upload
-        run: nix build -L .#ami-stable --out-link ami-stable-x86_64-linux
+        run: |
+          ami=$(deploy-ami build --release ${{ matrix.release }})
+          echo "ami=$ami" >> "$GITHUB_OUTPUT"
 
       - name: Terraform Plan
         working-directory: upload
         shell: nix develop --command bash -e {0}
-        run: terraform plan -var=system=x86_64-linux -var=ami_path=ami-stable-x86_64-linux --no-color
+        run: deploy-ami plan ${{ steps.build-ami.outputs.ami }}
 
-      # - name: Build and upload AMI
-      #   id: build-ami
-      #   working-directory: upload
-      #   run: nix develop -L --command ./run
-      #
       # - name: Save AMI IDs
       #   uses: actions/upload-artifact@v3
       #   with:

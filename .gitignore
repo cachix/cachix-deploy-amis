@@ -1,3 +1,6 @@
 .terraform*
 terraform.tfstate*
 ami-*
+result*
+.devenv*
+__pycache__
