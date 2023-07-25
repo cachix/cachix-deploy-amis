@@ -27,7 +27,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: cachix/install-nix-action@v22
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -35,31 +34,40 @@ jobs:
           role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
           aws-region: ${{ env.AWS_REGION }}
 
+      - uses: cachix/install-nix-action@v22
+
       - run: |
           nix profile install nixpkgs#unzip nixpkgs#which
-          echo $PATH
-          echo $(ls $HOME/.nix-profile/bin)
           export PATH=$HOME/.nix-profile/bin:$PATH
-          echo $(which unzip)
 
       # - uses: hashicorp/setup-terraform@v2
       #   with:
       #     cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: Initialize terraform
+      - name: Initialize Terraform
         working-directory: upload
-        run: nix develop -L --command bash -c "terraform init"
+        shell: nix develop --command bash -e {0}
+        run: terraform init
 
-      - name: Build and upload AMI
-        id: build-ami
+      - name: Build stable AMI
         working-directory: upload
-        run: nix develop -L --command ./run
+        run: nix build -L .#ami-stable --out-link ami-stable-x86_64-linux
 
-      - name: Save AMI IDs
-        uses: actions/upload-artifact@v3
-        with:
-          name: x86_64-linux-amis
-          path: upload/x86_64-linux-amis.json
+      - name: Terraform Plan
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: terraform plan -var=release=stable -var=system=x86_64-linux -no-color
+
+      # - name: Build and upload AMI
+      #   id: build-ami
+      #   working-directory: upload
+      #   run: nix develop -L --command ./run
+      #
+      # - name: Save AMI IDs
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: x86_64-linux-amis
+      #     path: upload/x86_64-linux-amis.json
 
 
   build-ami-aarch64-linux:
