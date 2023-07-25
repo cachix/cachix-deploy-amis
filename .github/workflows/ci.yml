@@ -56,7 +56,7 @@ jobs:
       - name: Terraform Plan
         working-directory: upload
         shell: nix develop --command bash -e {0}
-        run: terraform plan -var=release=stable -var=system=x86_64-linux -no-color
+        run: terraform plan -var=system=x86_64-linux -var=ami_path=ami-stable-x86_64-linux --no-color
 
       # - name: Build and upload AMI
       #   id: build-ami

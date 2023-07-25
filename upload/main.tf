@@ -20,17 +20,6 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-variable "release" {
-  type        = string
-  default     = "stable"
-  description = "NixOS version to use: stable or unstable."
-
-  validation {
-    condition     = contains(["stable", "unstable"], var.release)
-    error_message = "Invalid release: ${var.release}. Must be stable or unstable."
-  }
-}
-
 variable "system" {
   type = string
   description = "The two-component shorthand for the platform, e.g x86_64-linux"
@@ -39,6 +28,11 @@ variable "system" {
     condition = contains(["x86_64-linux", "aarch64-linux"], var.system)
     error_message = "System must be one of x86_64-linux or aarch64-linux"
   }
+}
+
+variable "ami_path" {
+  type = string
+  description = "Path to the directory containing the VHD file to import"
 }
 
 resource "aws_s3_bucket" "cachix-deploy-amis" {
@@ -118,7 +112,7 @@ EOF
 }
 
 locals {
-  vhd = one(fileset(path.module, "ami-${var.release}-${var.system}/*.vhd"))
+  vhd = one(fileset(path.module, "${var.ami_path}/*.vhd"))
   ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
 }
 
