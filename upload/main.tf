@@ -125,7 +125,7 @@ locals {
 
 data "aws_s3_objects" "cachix-deploy-vhds" {
   bucket = aws_s3_bucket.cachix-deploy-amis.bucket
-  prefix = var.ami_path
+  # prefix = var.ami_path
 }
 
 data "aws_s3_object" "cachix-deploy-vhd" {
