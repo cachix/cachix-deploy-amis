@@ -116,34 +116,49 @@ locals {
   ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
 }
 
-resource "aws_s3_object" "cachix-deploy-vhd" {
+# resource "aws_s3_object" "cachix-deploy-vhd" {
+#   bucket = aws_s3_bucket.cachix-deploy-amis.bucket
+#   key    = local.vhd
+#   source = local.vhd
+#   source_hash = filemd5(local.vhd)
+# }
+
+data "aws_s3_objects" "cachix-deploy-vhds" {
   bucket = aws_s3_bucket.cachix-deploy-amis.bucket
-  key    = local.vhd
-  source = local.vhd
-  source_hash = filemd5(local.vhd)
+  prefix = var.ami_path
+}
+
+data "aws_s3_object" "cachix-deploy-vhd" {
+  for_each = toset(data.aws_s3_objects.cachix-deploy-vhds.keys)
+
+  bucket = aws_s3_bucket.cachix-deploy-amis.bucket
+  key = each.key
 }
 
 resource "aws_ebs_snapshot_import" "cachix-deploy-snapshot" {
+  for_each = data.aws_s3_object.cachix-deploy-vhd
+
   disk_container {
     format = "VHD"
     user_bucket {
       s3_bucket = aws_s3_bucket.cachix-deploy-amis.bucket
-      s3_key    = aws_s3_object.cachix-deploy-vhd.key
+      s3_key    = each.value.key
     }
   }
 
   lifecycle {
-    replace_triggered_by = [
-      aws_s3_object.cachix-deploy-vhd
-    ]
+    create_before_destroy = true
+    replace_triggered_by = [ data.aws_s3_object.cachix-deploy-vhd[each.key] ]
   }
 
   role_name = aws_iam_role.vmimport.name
 }
 
 resource "aws_ami" "cachix-deploy-ami" {
-  name                = "cachix-deploy-ami-${aws_ebs_snapshot_import.cachix-deploy-snapshot.id}"
-  architecture        = local.ami_architecture
+  for_each            = resource.aws_ebs_snapshot_import.cachix-deploy-snapshot
+
+  name                = "cachix-deploy-ami-${each.value.id}"
+  architecture        = strcontains(each.value.disk_container.user_bucket.s3_key, "x86_64-linux") ? "x86_64" : "arm64"
   virtualization_type = "hvm"
   root_device_name    = "/dev/xvda"
   ena_support         = true
@@ -151,18 +166,25 @@ resource "aws_ami" "cachix-deploy-ami" {
 
   ebs_block_device {
     device_name           = "/dev/xvda"
-    snapshot_id           = aws_ebs_snapshot_import.cachix-deploy-snapshot.id
+    snapshot_id           = each.value.id
     volume_size           = 20
     delete_on_termination = true
     volume_type           = "gp3"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_ami_launch_permission" "share-cachix-deploy-ami" {
-  image_id = aws_ami.cachix-deploy-ami.id
+  for_each = aws_ami.cachix-deploy-ami
+  image_id = each.key
   group = "all"
 }
 
 output "ami-id" {
-  value = aws_ami.cachix-deploy-ami.id
+  value = {
+    for k, v in aws_ami.cachix-deploy-ami : k => v.id
+  }
 }
