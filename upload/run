@@ -15,13 +15,14 @@ for release in "stable" "unstable"; do
 
     aws s3 sync \
         --region $source_region \
+        --no-progress \
         --exclude "*" --include "*.vhd" \
         $ami_path \
         "s3://cachix-deploy-amis/$ami_path/"
 done
 
-# terraform apply -input=false -no-color -auto-approve
-terraform plan -input=false -no-color
+terraform apply -input=false -no-color -auto-approve
+# terraform plan -input=false -no-color
 
 ami_ids=$(terraform output -raw ami-id)
 echo $ami_ids
