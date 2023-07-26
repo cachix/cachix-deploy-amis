@@ -132,7 +132,7 @@ data "aws_s3_object" "cachix-deploy-vhd" {
   for_each = toset(data.aws_s3_objects.cachix-deploy-vhds.keys)
 
   bucket = aws_s3_bucket.cachix-deploy-amis.bucket
-  key = each.key
+  key = each.value
 }
 
 resource "aws_ebs_snapshot_import" "cachix-deploy-snapshot" {
@@ -142,20 +142,20 @@ resource "aws_ebs_snapshot_import" "cachix-deploy-snapshot" {
     format = "VHD"
     user_bucket {
       s3_bucket = aws_s3_bucket.cachix-deploy-amis.bucket
-      s3_key    = each.value.key
+      s3_key    = each.key
     }
   }
 
   lifecycle {
     create_before_destroy = true
-    replace_triggered_by = [ data.aws_s3_object.cachix-deploy-vhd[each.key] ]
+    # replace_triggered_by = [ data.aws_s3_object.cachix-deploy-vhd[each.key].name ]
   }
 
   role_name = aws_iam_role.vmimport.name
 }
 
 resource "aws_ami" "cachix-deploy-ami" {
-  for_each            = resource.aws_ebs_snapshot_import.cachix-deploy-snapshot
+  for_each            = aws_ebs_snapshot_import.cachix-deploy-snapshot
 
   name                = "cachix-deploy-ami-${each.value.id}"
   architecture        = strcontains(each.value.disk_container.user_bucket.s3_key, "x86_64-linux") ? "x86_64" : "arm64"
