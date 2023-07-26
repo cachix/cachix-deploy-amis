@@ -26,6 +26,6 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   source_ami_region = var.source_region
 }
 
-output ami_id {
+output id {
   value = aws_ami_copy.cachix-deploy-ami.id
 }
