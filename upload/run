@@ -21,10 +21,7 @@ for release in "stable" "unstable"; do
         "s3://cachix-deploy-amis/$ami_path/"
 done
 
-# Fetch regions
-regions=$(aws --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
-
-terraform plan -input=false -no-color -var="regions=$regions"
+terraform plan -input=false -no-color
 
 ami_ids=$(terraform output -raw ami-id)
 echo $ami_ids
