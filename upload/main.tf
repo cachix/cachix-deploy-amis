@@ -216,7 +216,7 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
             region = region
           }
       }
-    ])
+    ]...)
 
   name              = each.value.ami.name
   source_ami_id     = each.value.ami.id
