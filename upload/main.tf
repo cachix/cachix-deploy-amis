@@ -158,7 +158,7 @@ resource "aws_ami" "cachix-deploy-ami" {
   for_each            = aws_ebs_snapshot_import.cachix-deploy-snapshot
 
   name                = "cachix-deploy-ami-${each.value.id}"
-  architecture        = strcontains(each.value.disk_container.user_bucket.s3_key, "x86_64-linux") ? "x86_64" : "arm64"
+  architecture        = strcontains(each.value.disk_container[0].user_bucket.s3_key, "x86_64-linux") ? "x86_64" : "arm64"
   virtualization_type = "hvm"
   root_device_name    = "/dev/xvda"
   ena_support         = true
