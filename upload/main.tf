@@ -226,7 +226,8 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
 }
 
 output "ami-id" {
-  value = {
-    for k, v in aws_ami.cachix-deploy-ami : k => v.id
-  }
+  value = merge(
+    { for k, v in aws_ami.cachix-deploy-ami : k => v.id },
+    { for k, v in aws_ami_copy.cachix-deploy-ami : k => v.id }
+  )
 }
