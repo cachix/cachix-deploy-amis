@@ -1,11 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      source  = "hashicorp/aws",
-      configuration_aliases = [
-        aws.ap-northeast-1,
-        aws.ap-south-1
-      ]
+      source = "hashicorp/aws"
     }
   }
 }
@@ -23,16 +19,13 @@ variable "source_region" {
   description = "The region the AMI is in"
 }
 
-resource "aws_ami_copy" "cachix-deploy-ami-ap-south-1" {
-  provider          = aws.ap-south-1
+resource "aws_ami_copy" "cachix-deploy-ami" {
+  provider          = aws
   name              = var.ami.name
   source_ami_id     = var.ami.id
   source_ami_region = var.source_region
 }
 
-resource "aws_ami_copy" "cachix-deploy-ami-ap-northeast-1" {
-  provider          = aws.ap-northeast-1
-  name              = var.ami.name
-  source_ami_id     = var.ami.id
-  source_ami_region = var.source_region
+output ami_id {
+  value = aws_ami_copy.cachix-deploy-ami.id
 }

@@ -247,23 +247,28 @@ resource "aws_ami_launch_permission" "share-cachix-deploy-ami" {
   group = "all"
 }
 
-module "copy-ami" {
+module "copy-ami-ap-south-1" {
   source = "./modules/copy-ami"
-
   for_each = aws_ami.cachix-deploy-ami
-
-  providers = {
-    aws.ap-northeast-1 = aws.ap-northeast-1
-    aws.ap-south-1 = aws.ap-south-1
-  }
-
+  providers = { aws = aws.ap-south-1 }
   ami = each.value
   source_region = "eu-central-1"
+  depends_on = [ aws_ami.cachix-deploy-ami ]
+}
+
+module "copy-ami-ap-northeast-1" {
+  source = "./modules/copy-ami"
+  for_each = aws_ami.cachix-deploy-ami
+  providers = { aws = aws.ap-northeast-1 }
+  ami = each.value
+  source_region = "eu-central-1"
+  depends_on = [ aws_ami.cachix-deploy-ami ]
 }
 
 output "ami-id" {
   value = merge(
     { for k, v in aws_ami.cachix-deploy-ami : k => v.id },
-    { for k, v in module.copy-ami : k => v.id }
+    { for k, v in module.copy-ami-ap-south-1 : k => v.id },
+    { for k, v in module.copy-ami-ap-northeast-1 : k => v.id }
   )
 }
