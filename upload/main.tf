@@ -20,19 +20,24 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-variable "system" {
-  type = string
-  description = "The two-component shorthand for the platform, e.g x86_64-linux"
+# variable "system" {
+#   type = string
+#   description = "The two-component shorthand for the platform, e.g x86_64-linux"
+#
+#   validation  {
+#     condition = contains(["x86_64-linux", "aarch64-linux"], var.system)
+#     error_message = "System must be one of x86_64-linux or aarch64-linux"
+#   }
+# }
 
-  validation  {
-    condition = contains(["x86_64-linux", "aarch64-linux"], var.system)
-    error_message = "System must be one of x86_64-linux or aarch64-linux"
-  }
-}
+# variable "ami_path" {
+#   type = string
+#   description = "Path to the directory containing the VHD file to import"
+# }
 
-variable "ami_path" {
-  type = string
-  description = "Path to the directory containing the VHD file to import"
+variable "regions" {
+  type = list(string)
+  description = "Regions to deploy the AMIs to"
 }
 
 resource "aws_s3_bucket" "cachix-deploy-amis" {
@@ -112,8 +117,7 @@ EOF
 }
 
 locals {
-  vhd = one(fileset(path.module, "${var.ami_path}/*.vhd"))
-  ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
+  # ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
 }
 
 # resource "aws_s3_object" "cachix-deploy-vhd" {
@@ -182,6 +186,24 @@ resource "aws_ami_launch_permission" "share-cachix-deploy-ami" {
   for_each = aws_ami.cachix-deploy-ami
   image_id = each.key
   group = "all"
+}
+
+resource "aws_ami_copy" "cachix-deploy-ami" {
+  for_each = flatten([
+      for region in var.regions : {
+        for ami in aws_ami.cachix-deploy-ami :
+          "${region}-${ami.id}" => {
+            ami = ami
+            region = region
+          }
+      }
+    ])
+
+  name              = each.value.ami.name
+  source_ami_id     = each.value.ami.id
+  source_ami_region = each.value.region
+
+  depends_on = [ aws_ami.cachix-deploy-ami ]
 }
 
 output "ami-id" {

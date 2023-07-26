@@ -41,18 +41,18 @@ jobs:
         shell: nix develop --command bash -e {0}
         run: terraform init
 
-      - working-directory: upload
-        run: nix build -L .#ami-stable --out-link ami-stable-x86_64-linux
-
-      - working-directory: upload
-        shell: nix develop --command bash -e {0}
-        run: terraform plan -input=false -no-color -var=system=x86_64-linux -var=ami_path=ami-stable-x86_64-linux
-
-      # - name: Build and upload AMIs
-      #   working-directory: upload
-      #   shell: nix develop --command bash -e {0}
-      #   run: ./run
+      # - working-directory: upload
+      #   run: nix build -L .#ami-stable --out-link ami-stable-x86_64-linux
       #
+      # - working-directory: upload
+      #   shell: nix develop --command bash -e {0}
+      #   run: terraform plan -input=false -no-color -var=system=x86_64-linux -var=ami_path=ami-stable-x86_64-linux
+
+      - name: Build and upload AMIs
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: ./run
+
       # - name: Add AMI IDs to artifacts
       #   uses: actions/upload-artifact@v3
       #   with:
