@@ -211,7 +211,7 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   for_each = flatten([
       for region in var.regions : {
         for ami_id, ami in aws_ami.cachix-deploy-ami :
-          "${region}-${ami.id}" => {
+          "${region}-${ami_id}" => {
             ami = ami
             region = region
           }
