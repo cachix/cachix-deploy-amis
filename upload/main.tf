@@ -21,9 +21,43 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias = "aws-us-east-1"
+  alias = "us-east-1"
   region = "us-east-1"
 }
+
+provider "aws" {
+  alias = "ap-northeast-1"
+  region = "ap-northeast-1"
+}
+
+provider "aws" {
+  alias = "ap-northeast-2"
+  region = "ap-northeast-2"
+}
+
+provider "aws" {
+  alias = "ap-northeast-3"
+  region = "ap-northeast-3"
+}
+
+provider "aws" {
+  alias = "ap-south-1"
+  region = "ap-south-1"
+}
+
+    # "ap-southeast-1",
+    # "ap-southeast-2",
+    # "ca-central-1",
+    # "eu-central-1",
+    # "eu-north-1",
+    # "eu-west-1",
+    # "eu-west-2",
+    # "eu-west-3",
+    # "sa-east-1",
+    # "us-east-1",
+    # "us-east-2",
+    # "us-west-1",
+    # "us-west-2"
 
 # variable "system" {
 #   type = string
@@ -67,7 +101,6 @@ variable "regions" {
 
 locals {
   # ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
-  providers = { "aws-eu-central-1" = aws, "aws-us-east-1" = aws.aws-us-east-1 }
 }
 
 resource "aws_s3_bucket" "cachix-deploy-amis" {
@@ -217,16 +250,20 @@ resource "aws_ami_launch_permission" "share-cachix-deploy-ami" {
 module "copy-ami" {
   source = "./modules/copy-ami"
 
-  for_each = local.providers
+  for_each = aws_ami.cachix-deploy-ami
 
-  aws_provider = each.value
-  amis = aws_ami.cachix-deploy.ami
+  providers = {
+    aws.ap-northeast-1 = aws.ap-northeast-1
+    aws.ap-south-1 = aws.ap-south-1
+  }
+
+  ami = each.value
   source_region = "eu-central-1"
 }
 
 output "ami-id" {
   value = merge(
     { for k, v in aws_ami.cachix-deploy-ami : k => v.id },
-    { for k, v in aws_ami_copy.cachix-deploy-ami : k => v.id }
+    { for k, v in module.copy-ami : k => v.id }
   )
 }
