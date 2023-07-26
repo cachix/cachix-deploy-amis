@@ -20,6 +20,11 @@ provider "aws" {
   region = "eu-central-1"
 }
 
+provider "aws" {
+  alias = "aws-us-east-1"
+  region = "us-east-1"
+}
+
 # variable "system" {
 #   type = string
 #   description = "The two-component shorthand for the platform, e.g x86_64-linux"
@@ -57,6 +62,12 @@ variable "regions" {
     "us-west-1",
     "us-west-2"
   ]
+}
+
+
+locals {
+  # ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
+  providers = { "aws-eu-central-1" = aws, "aws-us-east-1" = aws.aws-us-east-1 }
 }
 
 resource "aws_s3_bucket" "cachix-deploy-amis" {
@@ -135,10 +146,6 @@ resource "aws_iam_role_policy" "vmimport_policy" {
 EOF
 }
 
-locals {
-  # ami_architecture = (var.system == "aarch64-linux" ? "arm64" : "x86_64")
-}
-
 # resource "aws_s3_object" "cachix-deploy-vhd" {
 #   bucket = aws_s3_bucket.cachix-deploy-amis.bucket
 #   key    = local.vhd
@@ -207,22 +214,14 @@ resource "aws_ami_launch_permission" "share-cachix-deploy-ami" {
   group = "all"
 }
 
-resource "aws_ami_copy" "cachix-deploy-ami" {
-  for_each = merge([
-      for region in var.regions : {
-        for ami_id, ami in aws_ami.cachix-deploy-ami :
-          "${region}-${ami_id}" => {
-            ami = ami
-            region = region
-          }
-      }
-    ]...)
+module "copy-ami" {
+  source = "./modules/copy-ami"
 
-  name              = each.value.ami.name
-  source_ami_id     = each.value.ami.id
-  source_ami_region = each.value.region
+  for_each = local.providers
 
-  depends_on = [ aws_ami.cachix-deploy-ami ]
+  aws_provider = each.value
+  amis = aws_ami.cachix-deploy.ami
+  source_region = "eu-central-1"
 }
 
 output "ami-id" {
