@@ -191,7 +191,7 @@ data "aws_s3_objects" "cachix_deploy_vhds" {
 }
 
 # Convert each VHD key into an S3 object
-data "aws_s3_object" "cachix-deploy-vhd" {
+data "aws_s3_object" "cachix_deploy_vhd" {
   for_each = toset(data.aws_s3_objects.cachix_deploy_vhds.keys)
 
   bucket = aws_s3_bucket.cachix_deploy_amis.bucket
