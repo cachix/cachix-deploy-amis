@@ -194,7 +194,7 @@ data "aws_s3_objects" "cachix_deploy_vhds" {
 data "aws_s3_object" "cachix_deploy_vhd" {
   for_each = toset(data.aws_s3_objects.cachix_deploy_vhds.keys)
 
-  bucket = aws_s3_bucket.cachix_deploy_amis.bucket
+  bucket = data.aws_s3_objects.cachix_deploy_vhds.bucket
   key = each.key
 }
 
