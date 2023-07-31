@@ -195,9 +195,7 @@ data "aws_s3_object" "cachix_deploy_vhd" {
   for_each = toset(data.aws_s3_objects.cachix_deploy_vhds.keys)
 
   bucket = aws_s3_bucket.cachix_deploy_amis.bucket
-  key = each.value
-
-  depends_on = [ data.aws_s3_objects.cachix_deploy_vhds ]
+  key = each.key
 }
 
 # Create an EBS snapshot for each VHD
