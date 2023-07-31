@@ -13,12 +13,13 @@ for release in "stable" "unstable"; do
 
     nix build ".#ami-$release" --out-link $ami_path
 
+    aws s3 rm --recursive "s3://cachix-deploy-amis/$ami_path/"
+
     aws s3 sync \
         --region $source_region \
         --no-progress \
         --exclude "*" --include "*.vhd" \
         --metadata "Release=$release,System=$system" \
-        --delete \
         $ami_path \
         "s3://cachix-deploy-amis/$ami_path/"
 done
