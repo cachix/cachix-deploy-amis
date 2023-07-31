@@ -218,7 +218,7 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
   role_name = aws_iam_role.vmimport.name
 
   tags = {
-    Arch = strcontains(each.key, "x86_64-linux") ? "x86_64" : "arm64"
+    System = strcontains(each.value.tags_all.System, "x86_64-linux") ? "x86_64" : "arm64"
   }
 }
 
@@ -227,7 +227,7 @@ resource "aws_ami" "cachix_deploy_ami" {
   for_each            = aws_ebs_snapshot_import.cachix_deploy_snapshot
 
   name                = "cachix_deploy_ami_${each.value.id}"
-  architecture        = each.value.tags_all.Arch
+  architecture        = each.value.tags_all.System
   virtualization_type = "hvm"
   root_device_name    = "/dev/xvda"
   ena_support         = true
@@ -246,7 +246,7 @@ resource "aws_ami" "cachix_deploy_ami" {
   }
 
   tags = {
-    Arch = each.value.tags_all.Arch
+    System = each.value.tags_all.System
   }
 }
 

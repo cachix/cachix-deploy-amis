@@ -17,6 +17,7 @@ for release in "stable" "unstable"; do
         --region $source_region \
         --no-progress \
         --exclude "*" --include "*.vhd" \
+        --metadata "Release=$release,System=$system" \
         $ami_path \
         "s3://cachix-deploy-amis/$ami_path/"
 done
