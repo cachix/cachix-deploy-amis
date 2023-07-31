@@ -106,6 +106,10 @@ provider "aws" {
   region = "us-west-2"
 }
 
+resource "aws_s3_bucket" "cachix-deploy-amis" {
+  bucket = "cachix-deploy-amis"
+}
+
 import {
   to = aws_s3_bucket.cachix_deploy_amis
   id = "cachix-deploy-amis"
@@ -217,7 +221,7 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
 
   lifecycle {
     create_before_destroy = true
-    # replace_triggered_by = [ data.aws_s3_object.cachix_deploy_vhd[each.key].name ]
+    replace_triggered_by = [ data.aws_s3_object.cachix_deploy_vhd[each.key].name ]
   }
 
   role_name = aws_iam_role.vmimport.name
@@ -260,7 +264,7 @@ resource "aws_ami" "cachix_deploy_ami" {
 # Make the AMIs public
 resource "aws_ami_launch_permission" "share_cachix_deploy_ami" {
   for_each = aws_ami.cachix_deploy_ami
-  image_id = each.key
+  image_id = each.value.id
   group = "all"
 }
 
