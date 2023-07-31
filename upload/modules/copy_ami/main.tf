@@ -10,6 +10,7 @@ variable "ami" {
   type = object({
     id   = string
     name = string
+    tags_all = map(string)
   })
   description = "The AMI to copy"
 }
@@ -24,6 +25,9 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   name              = var.ami.name
   source_ami_id     = var.ami.id
   source_ami_region = var.source_region
+  tags = {
+    Arch = var.tags_all.Arch
+  }
 }
 
 output id {
