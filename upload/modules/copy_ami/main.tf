@@ -26,6 +26,7 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   source_ami_id     = var.ami.id
   source_ami_region = var.source_region
   tags = {
+    Release = var.ami.tags_all.Release
     System = var.ami.tags_all.System
   }
 }
