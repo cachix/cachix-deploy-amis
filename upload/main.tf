@@ -223,7 +223,7 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
   role_name = aws_iam_role.vmimport.name
 
   tags = {
-    System = strcontains(each.value.tags_all.System, "x86_64-linux") ? "x86_64" : "arm64"
+    System = strcontains(each.value.tags.System, "x86_64-linux") ? "x86_64" : "arm64"
   }
 }
 
