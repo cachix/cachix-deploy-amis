@@ -15,13 +15,13 @@ for release in "stable" "unstable"; do
 
     aws s3 rm --recursive "s3://cachix-deploy-amis/$ami_path/"
 
-    aws s3 sync \
-        --region $source_region \
-        --no-progress \
-        --exclude "*" --include "*.vhd" \
-        --metadata "Release=$release,System=$system" \
-        $ami_path \
-        "s3://cachix-deploy-amis/$ami_path/"
+    # aws s3 sync \
+    #     --region $source_region \
+    #     --no-progress \
+    #     --exclude "*" --include "*.vhd" \
+    #     --metadata "Release=$release,System=$system" \
+    #     $ami_path \
+    #     "s3://cachix-deploy-amis/$ami_path/"
 done
 
 terraform apply -target="data.aws_s3_objects.cachix_deploy_vhds" -input=false -no-color -auto-approve

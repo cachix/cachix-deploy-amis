@@ -212,7 +212,7 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
 
   lifecycle {
     create_before_destroy = true
-    # replace_triggered_by = [ data.aws_s3_object.cachix_deploy_vhd[each.key].name ]
+    replace_triggered_by = [ data.aws_s3_object.cachix_deploy_vhd[each.key].this ]
   }
 
   role_name = aws_iam_role.vmimport.name
@@ -404,9 +404,9 @@ module "copy_ami_us_west_2" {
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
-output "ami_ids" {
-  value = merge(
-    { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
-    values(module.copy_ami_ap_northeast_1)[*].ami
-  )
-}
+# output "ami_ids" {
+#   value = merge(
+#     { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
+#     values(module.copy_ami_ap_northeast_1)[*].ami
+#   )
+# }
