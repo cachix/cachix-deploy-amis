@@ -212,7 +212,7 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
 
   lifecycle {
     create_before_destroy = true
-    replace_triggered_by = [ data.aws_s3_object.cachix_deploy_vhd[each.key].name ]
+    # replace_triggered_by = [ data.aws_s3_object.cachix_deploy_vhd[each.key].name ]
   }
 
   role_name = aws_iam_role.vmimport.name
