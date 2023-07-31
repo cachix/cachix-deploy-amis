@@ -106,6 +106,11 @@ provider "aws" {
   region = "us-west-2"
 }
 
+import {
+  to = aws_s3_bucket.cachix_deploy_amis
+  id = "cachix-deploy-amis"
+}
+
 # The bucket where we store the original VHDs
 # These are uploaded outside of Terraform.
 # Once a VHD is deleted, Terraform will destroy the corresponding AMIs.
