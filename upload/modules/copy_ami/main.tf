@@ -20,7 +20,9 @@ variable "source_region" {
   description = "The region the AMI is in"
 }
 
-data "aws_region" "target_region" {}
+data "aws_region" "target_region" {
+  provider          = aws
+}
 
 resource "aws_ami_copy" "cachix-deploy-ami" {
   provider          = aws
@@ -35,6 +37,6 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
 
 output "amis" {
   value = {
-    for _, v in aws_ami_copy.cachix-deploy-ami : "${v.tags_all.Release}.${data.aws_region.target_region.name}.${v.tags_all.System}" => v.id
+    for v in aws_ami_copy.cachix-deploy-ami : "${v.tags.Release}.${data.aws_region.target_region.name}.${v.tags.System}" => v.id
   }
 }
