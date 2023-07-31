@@ -407,6 +407,6 @@ module "copy_ami_us_west_2" {
 output "ami_ids" {
   value = merge(
     { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
-    # module.copy_ami_ap_northeast_1.ami,
+    values(module.copy_ami_ap_northeast_1)[*].ami
   )
 }
