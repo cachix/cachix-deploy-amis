@@ -24,19 +24,27 @@ data "aws_region" "target_region" {
   provider          = aws
 }
 
+locals {
+  target_region = data.aws_region.target_region.name
+  release = var.ami.tags_all.Release
+  system = var.ami.tags_all.System
+}
+
 resource "aws_ami_copy" "cachix-deploy-ami" {
   provider          = aws
   name              = var.ami.name
   source_ami_id     = var.ami.id
   source_ami_region = var.source_region
   tags = {
-    Release = var.ami.tags_all.Release
-    System = var.ami.tags_all.System
+    Release = local.release
+    System = local.system
   }
 }
 
-output "amis" {
-  value = {
-    for v in aws_ami_copy.cachix-deploy-ami : "${v.tags.Release}.${data.aws_region.target_region.name}.${v.tags.System}" => v.id
-  }
+locals {
+  new_ami = aws_ami_copy.cachix-deploy-ami
+}
+
+output "ami" {
+  value = { "${local.release}.${local.target_region}.${local.system}" = local.new_ami.id }
 }
