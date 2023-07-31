@@ -22,6 +22,7 @@ for release in "stable" "unstable"; do
         "s3://cachix-deploy-amis/$ami_path/"
 done
 
+terraform apply -target="aws_s3_objects.cachix_deploy_vhds" -input=false -no-color -auto-approve
 terraform apply -input=false -no-color -auto-approve
 # terraform plan -input=false -no-color
 
