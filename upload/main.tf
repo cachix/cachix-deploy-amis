@@ -268,7 +268,7 @@ module "copy_ami_ap_northeast_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ap_northeast_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -277,7 +277,7 @@ module "copy_ami_ap_northeast_2" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ap_northeast_2 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -286,7 +286,7 @@ module "copy_ami_ap_northeast_3" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ap_northeast_3 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -295,7 +295,7 @@ module "copy_ami_ap_south_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ap_south_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -304,7 +304,7 @@ module "copy_ami_ap_southeast_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ap_southeast_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -313,7 +313,7 @@ module "copy_ami_ap_southeast_2" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ap_southeast_2 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -322,16 +322,7 @@ module "copy_ami_ca_central_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.ca_central_1 }
   ami = each.value
-  source_region = "eu_central_1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
-}
-
-module "copy_ami_eu_central_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.eu_central_1 }
-  ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -340,7 +331,7 @@ module "copy_ami_eu_north_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.eu_north_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -349,7 +340,7 @@ module "copy_ami_eu_west_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.eu_west_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -358,7 +349,7 @@ module "copy_ami_eu_west_2" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.eu_west_2 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -367,7 +358,7 @@ module "copy_ami_eu_west_3" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.eu_west_3 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -376,7 +367,7 @@ module "copy_ami_sa_east_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.sa_east_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -385,7 +376,7 @@ module "copy_ami_us_east_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.us_east_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -394,7 +385,7 @@ module "copy_ami_us_east_2" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.us_east_2 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -403,7 +394,7 @@ module "copy_ami_us_west_1" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.us_west_1 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
@@ -412,14 +403,13 @@ module "copy_ami_us_west_2" {
   for_each = aws_ami.cachix_deploy_ami
   providers = { aws = aws.us_west_2 }
   ami = each.value
-  source_region = "eu_central_1"
+  source_region = "eu-central-1"
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
 output "ami_id" {
   value = merge(
     { for k, v in aws_ami.cachix_deploy_ami : k => v.id },
-    { for k, v in module.copy_ami_eu_central_1 : k => v.id },
     { for k, v in module.copy_ami_eu_north_1 : k => v.id },
     { for k, v in module.copy_ami_eu_west_1 : k => v.id },
     { for k, v in module.copy_ami_eu_west_2 : k => v.id },
