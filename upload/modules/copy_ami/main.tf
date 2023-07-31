@@ -35,6 +35,6 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
 
 output "amis" {
   value = {
-    for _, v in aws_ami_copy.cachix-deploy-ami : "${v.tags_all.Release}.${data.aws_region.target_region}.${v.tags_all.System}" => v.id
+    for _, v in aws_ami_copy.cachix-deploy-ami : "${v.tags_all.Release}.${data.aws_region.target_region.name}.${v.tags_all.System}" => v.id
   }
 }

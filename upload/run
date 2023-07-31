@@ -26,7 +26,7 @@ terraform apply -target="data.aws_s3_objects.cachix_deploy_vhds" -input=false -n
 terraform apply -input=false -no-color -auto-approve
 # terraform plan -input=false -no-color
 
-ami_ids=$(terraform output -json ami-id)
+ami_ids=$(terraform output -json ami_ids)
 echo $ami_ids
 
     # regions=$(aws --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
