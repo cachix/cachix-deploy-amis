@@ -404,17 +404,10 @@ module "copy_ami_us_west_2" {
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
-output "ami_id" {
+output "ami_ids" {
   value = merge(
-    { for k, v in aws_ami.cachix_deploy_ami : k => v.id },
-    { for k, v in module.copy_ami_eu_north_1 : k => v.id },
-    { for k, v in module.copy_ami_eu_west_1 : k => v.id },
-    { for k, v in module.copy_ami_eu_west_2 : k => v.id },
-    { for k, v in module.copy_ami_eu_west_3 : k => v.id },
-    { for k, v in module.copy_ami_sa_east_1 : k => v.id },
-    { for k, v in module.copy_ami_us_east_1 : k => v.id },
-    { for k, v in module.copy_ami_us_east_2 : k => v.id },
-    { for k, v in module.copy_ami_us_west_1 : k => v.id },
-    { for k, v in module.copy_ami_us_west_2 : k => v.id }
+    { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
+    module.copy_ami_ap_southeast_1.amis,
+    module.copy_ami_ap_southeast_2.amis
   )
 }
