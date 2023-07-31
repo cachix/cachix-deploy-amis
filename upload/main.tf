@@ -218,8 +218,8 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
   role_name = aws_iam_role.vmimport.name
 
   tags = {
-    Release = try(each.value.tags.Release, "unknown")
-    System = strcontains(try(each.value.tags.System, "x86_64-linux"), "x86_64-linux") ? "x86_64" : "arm64"
+    Release = each.value.metadata.Release
+    System = strcontains(each.value.metadata.System, "x86_64-linux") ? "x86_64" : "arm64"
   }
 }
 
@@ -407,6 +407,8 @@ module "copy_ami_us_west_2" {
 output "ami_ids" {
   value = merge(
     { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
-    values(module.copy_ami_ap_northeast_1)[*].ami
+    { for _, m in module.copy_ami_ap_northeast_1 : {
+      for k, v in m : k => v
+    }}
   )
 }
