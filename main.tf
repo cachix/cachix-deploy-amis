@@ -30,7 +30,7 @@ data "aws_region" "current" {}
 
 locals {
   amis = jsondecode(file("${path.module}/amis.json"))
-  key = "${var.release}.${coalesce(var.region, data.aws_region.current.name)}.${var.system}"
+  key  = "${var.release}.${coalesce(var.region, data.aws_region.current.name)}.${var.system}"
 }
 
 output "id" {

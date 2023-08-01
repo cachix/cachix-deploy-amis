@@ -4,29 +4,16 @@ set -xe
 source_region=eu-central-1
 system=$(nix eval --raw nixpkgs#system)
 
-AMIS_FILE=../amis.json
-NEW_AMIS=$(mktemp)
-printf "{}" > $NEW_AMIS
-
 for release in "stable" "unstable"; do 
-    nix build ".#ami-$release" --out-link ami-$release-$system
+    ami_path="ami-$release-$system"
 
-    terraform apply -var="release=$release" -var="system=$system" -auto-approve
-    ami=$(terraform output -raw ami-id)
+    nix build ".#ami-$release" --out-link $ami_path
 
-    regions=$(aws --profile cachix-engineering --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
-    for region in $regions; do
-       aws --profile cachix-engineering ec2 copy-image \
-            --source-region $source_region \
-            --source-image-id $ami \
-            --region $region \
-            --name cachix-deploy \
-         | jq --arg ami_name "$release.$region.$system" \
-              --slurp \
-              '.[1][($ami_name)] = .[0].ImageId | .[1]' - $NEW_AMIS \
-         | sponge $NEW_AMIS
-    done
+    aws s3 sync \
+        --region $source_region \
+        --no-progress \
+        --exclude "*" --include "*.vhd" \
+        --metadata "Release=$release,System=$system" \
+        $ami_path \
+        "s3://cachix-deploy-amis/$ami_path/"
 done
-
-# Update the AMI file with the new AMIs
-jq -s '.[0] * .[1]' $AMIS_FILE $NEW_AMIS | sponge $AMIS_FILE
