@@ -28,14 +28,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v22
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
           aws-region: ${{ env.AWS_REGION }}
-
-      - uses: cachix/install-nix-action@v22
 
         # TODO: not needed here, but find out why the runner is set up this way
       - name: Fix Nix PATH
@@ -53,6 +52,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Initialize Terraform
         working-directory: upload
