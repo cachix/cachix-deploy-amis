@@ -27,7 +27,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v22
 
       - name: Configure AWS credentials
@@ -50,7 +50,7 @@ jobs:
     needs: build-and-upload-vhds
     runs-on: [self-hosted, linux]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v22
 
       - name: Configure AWS credentials
