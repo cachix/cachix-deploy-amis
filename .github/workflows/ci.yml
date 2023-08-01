@@ -80,14 +80,9 @@ jobs:
         run: |
           terraform apply -input=false -no-color -auto-approve
           terraform output -json ami_ids > updated_amis.json
-
-      - name: Update AMI list
-        working-directory: upload
-        shell: nix develop --command bash -e {0}
-        run: |
           jq --sort-keys --slurp add ../amis.json ../updated_amis.json | sponge ../amis.json
 
-      - name: Create Pull Request
+      - name: Update AMI list
         uses: peter-evans/create-pull-request@v5
         with:
           commit-message: Update AMIs
