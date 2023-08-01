@@ -13,14 +13,18 @@ permissions:
   pull-requests: write
 
 env:
+  # The main region for the source AMI
   AWS_REGION: eu-central-1
   TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API }}
 
 jobs:
-  # Can't capture all of the outputs from a matrix build until this is fully implemented:
-  # https://github.com/actions/runner/pull/2477#issuecomment-1501003600
-  build-ami-x86_64-linux:
-    runs-on: [self-hosted, linux, X64]
+  build-and-upload-vhds:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [[self-hosted, linux, X64], [self-hosted, linux, ARM64]]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
@@ -33,81 +37,50 @@ jobs:
 
       - uses: cachix/install-nix-action@v22
 
+        # TODO: not needed here, but find out why the runner is set up this way
       - name: Fix Nix PATH
         run: export PATH=$HOME/.nix-profile/bin:$PATH
 
-      - name: Initialize Terraform
-        working-directory: upload
-        shell: nix develop --command bash -e {0}
-        run: terraform init
-
-      # - working-directory: upload
-      #   run: nix build -L .#ami-stable --out-link ami-stable-x86_64-linux
-      #
-      # - working-directory: upload
-      #   shell: nix develop --command bash -e {0}
-      #   run: terraform plan -input=false -no-color -var=system=x86_64-linux -var=ami_path=ami-stable-x86_64-linux
-
-      - name: Build and upload AMIs
+      - name: Build and upload VHDs
         working-directory: upload
         shell: nix develop --command bash -e {0}
         run: ./run
 
-      # - name: Add AMI IDs to artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: amis-x86_64-linux
-      #     path: upload/amis-x86_64-linux.json
-
-  build-ami-aarch64-linux:
-    if: false
-    runs-on: [self-hosted, linux, ARM64]
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::672242615610:role/github-actions-cachix-deploy-amis
-          aws-region: ${{ env.AWS_REGION }}
-
-      - uses: cachix/install-nix-action@v22
-
-      - name: Fix Nix PATH
-        run: export PATH=$HOME/.nix-profile/bin:$PATH
-
-      - name: Initialize Terraform
-        working-directory: upload
-        shell: nix develop --command bash -e {0}
-        run: terraform init
-
-      - name: Build and upload AMIs
-        working-directory: upload
-        shell: nix develop --command bash -e {0}
-        run: ./run
-
-      - name: Add AMI IDs to artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: amis-aarch64-linux
-          path: upload/amis-aarch64-linux.json
-
-  release:
-    needs: [build-ami-x86_64-linux, build-ami-aarch64-linux]
+  # TODO: open a PR with the plan
+  deploy-amis:
+    needs: build-and-upload-vhds
     runs-on: [self-hosted, linux]
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v22
 
-      - name: Fetch AMI IDs
-        uses: actions/download-artifact@v3
+      - name: Initialize Terraform
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: terraform init
+
+      - name: Sync uploaded VHDs with Terraform
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: |
+          terraform apply \
+            -target="data.aws_s3_objects.cachix_deploy_vhds" \
+            -input=false \
+            -no-color \
+            -auto-approve
+
+      - name: Apply Terraform plan
+        working-directory: upload
+        shell: nix develop --command bash -e {0}
+        run: |
+          terraform apply -input=false -no-color -auto-approve
+          terraform output -json ami_ids > updated_amis.json
 
       - name: Update AMI list
         working-directory: upload
         shell: nix develop --command bash -e {0}
         run: |
-          jq --sort-keys --slurp add ../amis.json ../amis-aarch64-linux.json ../amis-x86_64-linux.json | sponge ../amis.json
+          jq --sort-keys --slurp add ../amis.json ../updated_amis.json | sponge ../amis.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5

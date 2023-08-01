@@ -4,10 +4,6 @@ set -xe
 source_region=eu-central-1
 system=$(nix eval --raw nixpkgs#system)
 
-AMIS_FILE=../amis.json
-NEW_AMIS=$(mktemp)
-printf "{}" > $NEW_AMIS
-
 for release in "stable" "unstable"; do 
     ami_path="ami-$release-$system"
 
@@ -21,24 +17,3 @@ for release in "stable" "unstable"; do
         $ami_path \
         "s3://cachix-deploy-amis/$ami_path/"
 done
-
-terraform apply -target="data.aws_s3_objects.cachix_deploy_vhds" -input=false -no-color -auto-approve
-terraform apply -input=false -no-color -auto-approve
-# terraform plan -input=false -no-color
-
-ami_ids=$(terraform output -json ami_ids)
-echo $ami_ids
-
-    # regions=$(aws --region $source_region ec2 describe-regions --query 'Regions[].{Name:RegionName}' --output text)
-    # for region in $regions; do
-    #    aws ec2 copy-image \
-    #         --source-region $source_region \
-    #         --source-image-id $ami_id \
-    #         --region $region \
-    #         --name cachix-deploy \
-    #      | jq --arg ami_name "$release.$region.$system" \
-    #           --slurp \
-    #           '.[1][($ami_name)] = .[0].ImageId | .[1]' - $NEW_AMIS \
-    #      | sponge $NEW_AMIS
-
-cp $NEW_AMIS "amis-$system.json"
