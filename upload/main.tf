@@ -404,7 +404,15 @@ module "copy_ami_us_west_2" {
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
+# TODO: this can be made simpler by extracting the ami stuff into a separate module.
+# We then use for_each on that module and flatten just once.
+# That and maybe switch to lists instead of maps at some point in the for_each waterfall.
 locals {
+  source_ami = {
+    for v in values(aws_ami.cachix_deploy_ami) :
+      "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id
+  }
+
   regional_amis = [
     module.copy_ami_ap_northeast_1,
     module.copy_ami_ap_northeast_2,
@@ -433,7 +441,7 @@ locals {
 
 output "ami_ids" {
   value = merge(
-    { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
+    local.source_ami,
     local.regional_ami_ids
   )
 }
