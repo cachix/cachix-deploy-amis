@@ -227,6 +227,8 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
 resource "aws_ami" "cachix_deploy_ami" {
   for_each = aws_ebs_snapshot_import.cachix_deploy_snapshot
 
+  deprecation_time = "2025-08-01T00:00:00Z"
+
   name                = "cachix_deploy_ami_${each.value.id}"
   architecture        = each.value.tags_all.System
   virtualization_type = "hvm"
