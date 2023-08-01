@@ -8,26 +8,26 @@ terraform {
 
 variable "ami" {
   type = object({
-    id   = string
-    name = string
+    id       = string
+    name     = string
     tags_all = map(string)
   })
   description = "The AMI to copy"
 }
 
 variable "source_region" {
-  type = string
+  type        = string
   description = "The region the AMI is in"
 }
 
 data "aws_region" "target_region" {
-  provider          = aws
+  provider = aws
 }
 
 locals {
   target_region = data.aws_region.target_region.name
-  release = var.ami.tags_all.Release
-  system = var.ami.tags_all.System
+  release       = var.ami.tags_all.Release
+  system        = var.ami.tags_all.System
 }
 
 resource "aws_ami_copy" "cachix-deploy-ami" {
@@ -37,7 +37,7 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   source_ami_region = var.source_region
   tags = {
     Release = local.release
-    System = local.system
+    System  = local.system
   }
 }
 

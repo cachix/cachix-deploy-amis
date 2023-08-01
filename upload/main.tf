@@ -22,87 +22,87 @@ provider "aws" {
 
 # AWS providers for each of our enabled regions
 provider "aws" {
-  alias = "ap_northeast_1"
+  alias  = "ap_northeast_1"
   region = "ap-northeast-1"
 }
 
 provider "aws" {
-  alias = "ap_northeast_2"
+  alias  = "ap_northeast_2"
   region = "ap-northeast-2"
 }
 
 provider "aws" {
-  alias = "ap_northeast_3"
+  alias  = "ap_northeast_3"
   region = "ap-northeast-3"
 }
 
 provider "aws" {
-  alias = "ap_south_1"
+  alias  = "ap_south_1"
   region = "ap-south-1"
 }
 
 provider "aws" {
-  alias = "ap_southeast_1"
+  alias  = "ap_southeast_1"
   region = "ap-southeast-1"
 }
 
 provider "aws" {
-  alias = "ap_southeast_2"
+  alias  = "ap_southeast_2"
   region = "ap-southeast-2"
 }
 
 provider "aws" {
-  alias = "ca_central_1"
+  alias  = "ca_central_1"
   region = "ca-central-1"
 }
 
 provider "aws" {
-  alias = "eu_central_1"
+  alias  = "eu_central_1"
   region = "eu-central-1"
 }
 
 provider "aws" {
-  alias = "eu_north_1"
+  alias  = "eu_north_1"
   region = "eu-north-1"
 }
 
 provider "aws" {
-  alias = "eu_west_1"
+  alias  = "eu_west_1"
   region = "eu-west-1"
 }
 
 provider "aws" {
-  alias = "eu_west_2"
+  alias  = "eu_west_2"
   region = "eu-west-2"
 }
 
 provider "aws" {
-  alias = "eu_west_3"
+  alias  = "eu_west_3"
   region = "eu-west-3"
 }
 
 provider "aws" {
-  alias = "sa_east_1"
+  alias  = "sa_east_1"
   region = "sa-east-1"
 }
 
 provider "aws" {
-  alias = "us_east_1"
+  alias  = "us_east_1"
   region = "us-east-1"
 }
 
 provider "aws" {
-  alias = "us_east_2"
+  alias  = "us_east_2"
   region = "us-east-2"
 }
 
 provider "aws" {
-  alias = "us_west_1"
+  alias  = "us_west_1"
   region = "us-west-1"
 }
 
 provider "aws" {
-  alias = "us_west_2"
+  alias  = "us_west_2"
   region = "us-west-2"
 }
 
@@ -122,7 +122,7 @@ resource "aws_s3_bucket_ownership_controls" "cachix_deploy_amis" {
 
 # TODO: is an ACL needed if buckets are private by default?
 resource "aws_s3_bucket_acl" "cachix_deploy_amis_acl" {
-  depends_on = [ aws_s3_bucket_ownership_controls.cachix_deploy_amis ]
+  depends_on = [aws_s3_bucket_ownership_controls.cachix_deploy_amis]
 
   bucket = aws_s3_bucket.cachix_deploy_amis.id
   acl    = "private"
@@ -195,7 +195,7 @@ data "aws_s3_object" "cachix_deploy_vhd" {
   for_each = toset(data.aws_s3_objects.cachix_deploy_vhds.keys)
 
   bucket = data.aws_s3_objects.cachix_deploy_vhds.bucket
-  key = each.key
+  key    = each.key
 }
 
 # Create an EBS snapshot for each VHD
@@ -219,13 +219,13 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
 
   tags = {
     Release = each.value.metadata.Release
-    System = strcontains(each.value.metadata.System, "x86_64-linux") ? "x86_64" : "arm64"
+    System  = strcontains(each.value.metadata.System, "x86_64-linux") ? "x86_64" : "arm64"
   }
 }
 
 # Create an AMI for each EBS snapshot
 resource "aws_ami" "cachix_deploy_ami" {
-  for_each            = aws_ebs_snapshot_import.cachix_deploy_snapshot
+  for_each = aws_ebs_snapshot_import.cachix_deploy_snapshot
 
   name                = "cachix_deploy_ami_${each.value.id}"
   architecture        = each.value.tags_all.System
@@ -248,7 +248,7 @@ resource "aws_ami" "cachix_deploy_ami" {
 
   tags = {
     Release = each.value.tags_all.Release
-    System = each.value.tags_all.System
+    System  = each.value.tags_all.System
   }
 }
 
@@ -256,152 +256,152 @@ resource "aws_ami" "cachix_deploy_ami" {
 resource "aws_ami_launch_permission" "share_cachix_deploy_ami" {
   for_each = aws_ami.cachix_deploy_ami
   image_id = each.value.id
-  group = "all"
+  group    = "all"
 }
 
 # Begin copying the original AMI to every enabled region.
 module "copy_ami_ap_northeast_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ap_northeast_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ap_northeast_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_ap_northeast_2" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ap_northeast_2 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ap_northeast_2 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_ap_northeast_3" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ap_northeast_3 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ap_northeast_3 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_ap_south_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ap_south_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ap_south_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_ap_southeast_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ap_southeast_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ap_southeast_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_ap_southeast_2" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ap_southeast_2 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ap_southeast_2 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_ca_central_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.ca_central_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.ca_central_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_eu_north_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.eu_north_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.eu_north_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_eu_west_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.eu_west_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.eu_west_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_eu_west_2" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.eu_west_2 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.eu_west_2 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_eu_west_3" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.eu_west_3 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.eu_west_3 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_sa_east_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.sa_east_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.sa_east_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_us_east_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.us_east_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.us_east_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_us_east_2" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.us_east_2 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.us_east_2 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_us_west_1" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.us_west_1 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.us_west_1 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 module "copy_ami_us_west_2" {
-  source = "./modules/copy_ami"
-  for_each = aws_ami.cachix_deploy_ami
-  providers = { aws = aws.us_west_2 }
-  ami = each.value
+  source        = "./modules/copy_ami"
+  for_each      = aws_ami.cachix_deploy_ami
+  providers     = { aws = aws.us_west_2 }
+  ami           = each.value
   source_region = "eu-central-1"
-  depends_on = [ aws_ami.cachix_deploy_ami ]
+  depends_on    = [aws_ami.cachix_deploy_ami]
 }
 
 # TODO: this can be made simpler by extracting the ami stuff into a separate module.
@@ -410,7 +410,7 @@ module "copy_ami_us_west_2" {
 locals {
   source_ami = {
     for v in values(aws_ami.cachix_deploy_ami) :
-      "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id
+    "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id
   }
 
   regional_amis = [
@@ -434,7 +434,7 @@ locals {
 
   regional_ami_ids = merge(flatten([
     for m in local.regional_amis : [
-      for a in values(m) : [ a.ami ]
+      for a in values(m) : [a.ami]
     ]
   ]))
 }
