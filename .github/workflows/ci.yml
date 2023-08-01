@@ -79,12 +79,11 @@ jobs:
         shell: nix develop --command bash -e {0}
         run: |
           terraform apply -input=false -no-color -auto-approve
-          terraform output -json ami_ids > updated_amis.json
-          jq --sort-keys --slurp add ../amis.json ../updated_amis.json | sponge ../amis.json
+          terraform output -json ami_ids | jq --sort-keys --slurp add ../amis.json - | sponge ../amis.json
 
       - name: Update AMI list
         uses: peter-evans/create-pull-request@v5
         with:
+          title: Update AMIs
+          body:
           commit-message: Update AMIs
-
-
