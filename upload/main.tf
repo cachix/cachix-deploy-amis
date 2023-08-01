@@ -219,7 +219,8 @@ resource "aws_ebs_snapshot_import" "cachix_deploy_snapshot" {
 
   tags = {
     Release = each.value.metadata.Release
-    System  = strcontains(each.value.metadata.System, "x86_64-linux") ? "x86_64" : "arm64"
+    System  = each.value.metadata.System
+    Arch    = strcontains(each.value.metadata.System, "x86_64-linux") ? "x86_64" : "arm64"
   }
 }
 
@@ -230,7 +231,7 @@ resource "aws_ami" "cachix_deploy_ami" {
   deprecation_time = "2025-08-01T00:00:00Z"
 
   name                = "cachix_deploy_ami_${each.value.id}"
-  architecture        = each.value.tags_all.System
+  architecture        = each.value.tags_all.Arch
   virtualization_type = "hvm"
   root_device_name    = "/dev/xvda"
   ena_support         = true
@@ -251,6 +252,7 @@ resource "aws_ami" "cachix_deploy_ami" {
   tags = {
     Release = each.value.tags_all.Release
     System  = each.value.tags_all.System
+    Arch    = each.value.tags_all.Arch
   }
 }
 

@@ -28,6 +28,7 @@ locals {
   target_region = data.aws_region.target_region.name
   release       = var.ami.tags_all.Release
   system        = var.ami.tags_all.System
+  arch          = var.ami.tags_all.Arch
 }
 
 resource "aws_ami_copy" "cachix-deploy-ami" {
@@ -38,6 +39,7 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   tags = {
     Release = local.release
     System  = local.system
+    Arch    = local.arch
   }
 }
 
