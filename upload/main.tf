@@ -404,9 +404,36 @@ module "copy_ami_us_west_2" {
   depends_on = [ aws_ami.cachix_deploy_ami ]
 }
 
+locals {
+  regional_amis = [
+    module.copy_ami_ap_northeast_1,
+    module.copy_ami_ap_northeast_2,
+    module.copy_ami_ap_northeast_3,
+    module.copy_ami_ap_south_1,
+    module.copy_ami_ap_southeast_1,
+    module.copy_ami_ap_southeast_2,
+    module.copy_ami_ca_central_1,
+    module.copy_ami_eu_north_1,
+    module.copy_ami_eu_west_1,
+    module.copy_ami_eu_west_2,
+    module.copy_ami_eu_west_3,
+    module.copy_ami_sa_east_1,
+    module.copy_ami_us_east_1,
+    module.copy_ami_us_east_2,
+    module.copy_ami_us_west_1,
+    module.copy_ami_us_west_2
+  ]
+
+  regional_ami_ids = merge(flatten([
+    for m in local.regional_amis : [
+      for a in values(m) : [ a.ami ]
+    ]
+  ]))
+}
+
 output "ami_ids" {
   value = merge(
     { for _, v in aws_ami.cachix_deploy_ami : "${v.tags_all.Release}.eu-central-1.${v.tags_all.System}" => v.id },
-    { for _, m in module.copy_ami_ap_northeast_1 : m.ami }
+    local.regional_ami_ids
   )
 }
