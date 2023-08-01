@@ -436,7 +436,7 @@ locals {
     for m in local.regional_amis : [
       for a in values(m) : [a.ami]
     ]
-  ]))
+  ])...)
 }
 
 output "ami_ids" {
