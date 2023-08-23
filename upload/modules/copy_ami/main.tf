@@ -43,6 +43,12 @@ resource "aws_ami_copy" "cachix-deploy-ami" {
   }
 }
 
+# Make the AMI public
+resource "aws_ami_launch_permission" "share_cachix_deploy_ami" {
+  image_id = aws_ami_copy.cachix-deploy-ami.id
+  group    = "all"
+}
+
 locals {
   new_ami = aws_ami_copy.cachix-deploy-ami
 }
